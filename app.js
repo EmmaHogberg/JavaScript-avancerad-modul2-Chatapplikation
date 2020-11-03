@@ -5,12 +5,26 @@
   const sendButtonEL = document.querySelector(".send-new-message-button");
   const newMessageEL = document.querySelector(".new-message");
   const messagesEl = document.querySelector(".messages");
+  const theirVideoContainer = document.querySelector(".video-container.them");
 
-  const printMessage = (text) => {
-    const messageContainer = document.createElement("div");
-    messageContainer.classList.add("message");
-    messageContainer.innerHTML = `<div>${text}</div>`;
-    messagesEl.append(messageContainer);
+  // Send message function
+  const printMessage = (text, who) => {
+    const messageEl = document.createElement("div");
+    messageEl.classList.add("message", who);
+    // let today = new Date();
+    // let hour = today.getHours()
+    // if (today.getMinutes() < 10) {
+    //   hour = "0" + today.getMinutes()
+    // }
+
+    // let time =
+    //   today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    // if (today.getMinutes() < 10) {
+    //   time = today.getHours() + ":0" + today.getMinutes();
+    // }
+    messageEl.innerHTML = `<div>${time}<br>${text}</div>`;
+    messagesEl.append(messageEl);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
   };
 
   // Get peer id (hash) from URL
@@ -54,10 +68,9 @@
 
   // On incoming connection
   peer.on("connection", (connection) => {
+    // Close existing connection and set new connection
+    dataConnection && dataConnection.close();
     dataConnection = connection;
-    dataConnection.on("data", (textMessage) => {
-      printMessage(textMessage);
-    });
 
     const event = new CustomEvent("peer-changed", {
       detail: connection.peer,
@@ -65,7 +78,7 @@
     document.dispatchEvent(event);
   });
 
-  // Second and final code with map
+  // Peer list
   listPeersButtonEl.addEventListener("click", () => {
     peer.listAllPeers((peers) => {
       peersEl.innerHTML = "";
@@ -96,10 +109,6 @@
     // Connect to peer
     dataConnection = peer.connect(theirPeerId);
 
-    dataConnection.on("data", (textMessage) => {
-      printMessage(textMessage);
-    });
-
     dataConnection.on("open", () => {
       // Dispatch Custom Event with connected peerId
       const event = new CustomEvent("peer-changed", {
@@ -121,13 +130,47 @@
       button.classList.remove("connected");
     });
     // Add class "connected" to clicked button
-    connectButtonEl.classList.add("connected");
+    connectButtonEl && connectButtonEl.classList.add("connected");
+
+    // Listen for incoming data/textmessage
+    dataConnection.on("data", (textMessage) => {
+      printMessage(textMessage, "them");
+    });
+    // Set focus on text input
+    newMessageEL.focus();
+
+    //
+    theirVideoContainer.querySelector(".name").innerText = peerId;
+    theirVideoContainer.classList.add("connected");
+    theirVideoContainer.querySelector(".start").classList.add("active");
+    theirVideoContainer.querySelector(".stop").classList.remove("active");
   });
 
-  // Event listener for click on "send"
-  sendButtonEL.addEventListener("click", () => {
+  // Send message to peer
+  const sendMessage = (event) => {
     if (!dataConnection) return;
-    dataConnection.send(newMessageEL.value);
-    printMessage(newMessageEL.value);
+    if (newMessageEL === "") return;
+
+    if (event.type === "click" || event.keyCode === 13) {
+      dataConnection.send(newMessageEL.value);
+      printMessage(newMessageEL.value, "me");
+
+      // Clear text input field
+      newMessageEL.value = "";
+    }
+    // Set focus on text input
+    newMessageEL.focus();
+  };
+
+  // Event listeners for "send"
+  sendButtonEL.addEventListener("click", sendMessage);
+  newMessageEL.addEventListener("keyup", sendMessage);
+
+  // Event listener for click "Start video chat"
+  const startVideoButton = theirVideoContainer.querySelector(".start");
+  const stopVideoButton = theirVideoContainer.querySelector(".stop");
+  startVideoButton.addEventListener("click", () => {
+    startVideoButton.classList.remove("active");
+    stopVideoButton.classList.add("active");
   });
 })();
