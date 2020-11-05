@@ -11,17 +11,24 @@
   const printMessage = (text, who) => {
     const messageEl = document.createElement("div");
     messageEl.classList.add("message", who);
-    // let today = new Date();
-    // let hour = today.getHours()
-    // if (today.getMinutes() < 10) {
-    //   hour = "0" + today.getMinutes()
-    // }
 
-    // let time =
-    //   today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
-    // if (today.getMinutes() < 10) {
-    //   time = today.getHours() + ":0" + today.getMinutes();
-    // }
+    // Time-stamp
+    let today = new Date();
+    let hours = today.getHours();
+    let minutes = today.getMinutes();
+    let seconds = today.getSeconds();
+
+    if (minutes < 10) {
+      minutes = "0" + minutes;
+    }
+
+    if (seconds < 10) {
+      seconds = "0" + seconds;
+    }
+
+    let time = hours + ":" + minutes + ":" + seconds;
+
+    // Message
     messageEl.innerHTML = `<div>${time}<br>${text}</div>`;
     messagesEl.append(messageEl);
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -78,7 +85,7 @@
     document.dispatchEvent(event);
   });
 
-  // Peer list
+  // Event listener for click "refresh list"
   listPeersButtonEl.addEventListener("click", () => {
     peer.listAllPeers((peers) => {
       peersEl.innerHTML = "";
